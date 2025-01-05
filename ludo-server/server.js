@@ -1,9 +1,20 @@
 // server.js
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+
+// Importiere die Spiellogik
+const {
+  initialGameState,
+  applyMove,
+  switchPlayer,
+} = require("./ludogame/gameLogic");
+
+// Importiere die Pfade
+const { PATHS, END_SLOTS } = require("./ludogame/paths");
 
 // ---------------------------------------
 // Express + Socket.IO Setup
@@ -19,7 +30,7 @@ const io = new Server(server, {
 
 // EJS-Template-Engine aktivieren
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views")); 
+app.set("views", path.join(__dirname, "views"));
 // "views"-Ordner = server/views
 
 // Statische Dateien ausliefern
@@ -59,184 +70,6 @@ app.get("/admin", (req, res) => {
 });
 
 // ---------------------------------------
-// Ludo-Logik (Beispiel: initialGameState, applyMove, etc.)
-// ---------------------------------------
-function initialGameState(mode) {
-  return mode === 2
-    ? {
-        players: {
-          red: { pieces: [0, 0, 0, 0], color: "#FF7043", socketId: null },
-          blue: { pieces: [0, 0, 0, 0], color: "#5C6BC0", socketId: null },
-        },
-        currentPlayer: "red",
-        dice: null,
-        message: "Red starts the 2-player game!",
-      }
-    : {
-        players: {
-          red: { pieces: [0, 0, 0, 0], color: "#FF7043", socketId: null },
-          blue: { pieces: [0, 0, 0, 0], color: "#5C6BC0", socketId: null },
-          green: { pieces: [0, 0, 0, 0], color: "#81C784", socketId: null },
-          yellow: { pieces: [0, 0, 0, 0], color: "#FFEB3B", socketId: null },
-        },
-        currentPlayer: "red",
-        dice: null,
-        message: "Red starts the 4-player game!",
-      };
-}
-
-// server.js (Hilfsfunktionen)
-
-// Bestimmt die Farbe des Spielers basierend auf seiner socketId
-function getPlayerColorBySocket(room, socketId) {
-  for (const color in room.gameState.players) {
-    if (room.gameState.players[color].socketId === socketId) {
-      return color;
-    }
-  }
-  return null;
-}
-
-// Ermittelt mögliche Bewegungen basierend auf dem Wurf
-function getPossibleMoves(room, playerColor, roll) {
-  const player = room.gameState.players[playerColor];
-  const possibleMoves = [];
-
-  player.pieces.forEach((position, index) => {
-    if (position === 0 && roll === 6) {
-      // Kann eine Figur aus der Basis bewegen
-      possibleMoves.push(index);
-    } else if (position > 0 && position + roll <= PATHS[playerColor].length) {
-      // Kann eine Figur entlang des Pfades bewegen
-      possibleMoves.push(index);
-    }
-  });
-
-  return possibleMoves;
-}
-
-// Bewegt eine spezifische Figur und handhabt Kollisionen
-function movePiece(room, gameState, playerColor, pieceIndex, roll) {
-  const player = gameState.players[playerColor];
-  let newPosition = player.pieces[pieceIndex] + roll;
-
-  if (player.pieces[pieceIndex] === 0 && roll === 6) {
-    newPosition = 1; // Figur aus der Basis bewegen
-  }
-
-  // Überprüfen, ob die neue Position gültig ist
-  if (newPosition > PATHS[playerColor].length) {
-    return { success: false, message: "Ungültiger Zug: Position außerhalb des Pfades." };
-  }
-
-  // Überprüfen auf Kollisionen
-  const targetCoords = PATHS[playerColor][newPosition - 1];
-  for (const color in gameState.players) {
-    if (color !== playerColor) {
-      const opponent = gameState.players[color];
-      opponent.pieces.forEach((opponentPos, idx) => {
-        if (opponentPos > 0 && JSON.stringify(PATHS[color][opponentPos - 1]) === JSON.stringify(targetCoords)) {
-          // Kollision! Gegnerische Figur zurück zur Basis
-          gameState.players[color].pieces[idx] = 0;
-          gameState.message += ` ${playerColor} hat ${color}'s Figur geschlagen!`;
-        }
-      });
-    }
-  }
-
-  // Aktualisiere die Position der eigenen Figur
-  gameState.players[playerColor].pieces[pieceIndex] = newPosition;
-  gameState.message += ` ${playerColor} bewegt Figur ${pieceIndex + 1} auf Position ${newPosition}.`;
-
-  return { success: true };
-}
-
-// Wechselt zum nächsten Spieler
-function switchPlayer(gameState, room) {
-  const playerColors = Object.keys(room.gameState.players).filter(color => room.gameState.players[color].socketId);
-  const currentIndex = playerColors.indexOf(gameState.currentPlayer);
-  const nextIndex = (currentIndex + 1) % playerColors.length;
-  gameState.currentPlayer = playerColors[nextIndex];
-  gameState.message += ` Es ist jetzt ${gameState.currentPlayer}'s Zug.`;
-}
-
-// Überprüft, ob ein Spieler gewonnen hat
-function checkWinner(room, playerColor) {
-  const player = room.gameState.players[playerColor];
-  return player.pieces.every(piece => piece > 0 && END_SLOTS[playerColor].includes(PATHS[playerColor][piece - 1]))
-    ? playerColor
-    : null;
-}
-
-
-function applyMove(gameState, moveData, roomId, socketId) {
-  const newState = { ...gameState };
-  const room = rooms[roomId];
-  if (!room) return newState;
-
-  const playerColor = getPlayerColorBySocket(room, socketId);
-  if (!playerColor) return { ...newState, error: "Spieler nicht im Raum." };
-
-  switch(moveData.type) {
-    case "ROLL_DICE":
-      if (newState.currentPlayer !== playerColor) {
-        return { ...newState, error: "Es ist nicht dein Zug!" };
-      }
-      const roll = Math.floor(Math.random() * 6) + 1;
-      newState.dice = roll;
-      newState.message = `${newState.currentPlayer} hat eine ${roll} gewürfelt!`;
-
-      // Bestimme mögliche Bewegungen basierend auf dem Würfelergebnis
-      const possibleMoves = getPossibleMoves(room, playerColor, roll);
-      newState.possibleMoves = possibleMoves;
-
-      if (possibleMoves.length === 0) {
-        // Kein gültiger Zug, wechsle den Spieler
-        switchPlayer(newState, room);
-      }
-
-      break;
-
-    case "MOVE_PIECE":
-      if (newState.currentPlayer !== playerColor) {
-        return { ...newState, error: "Es ist nicht dein Zug!" };
-      }
-
-      const { pieceIndex } = moveData;
-      const moveResult = movePiece(room, newState, playerColor, pieceIndex, newState.dice);
-
-      if (!moveResult.success) {
-        return { ...newState, error: moveResult.message };
-      }
-
-      // Überprüfe auf Gewinn
-      const winner = checkWinner(room, playerColor);
-      if (winner) {
-        newState.message = `${winner} hat das Spiel gewonnen!`;
-        newState.gameOver = true;
-      } else {
-        // Wechsle den Spieler basierend auf dem Würfelwurf
-        if (newState.dice !== 6) {
-          switchPlayer(newState, room);
-        } else {
-          newState.message += ` ${newState.currentPlayer} darf erneut würfeln!`;
-          newState.possibleMoves = [];
-        }
-      }
-
-      break;
-
-    default:
-      newState.error = "Unbekannter Zugtyp.";
-  }
-
-  // Aktualisiere den Raum mit dem neuen Spielzustand
-  rooms[roomId].gameState = newState;
-  return newState;
-}
-
-
-// ---------------------------------------
 // Hilfsfunktion: checkQueue
 // ---------------------------------------
 function checkQueue(mode) {
@@ -264,7 +97,7 @@ function checkQueue(mode) {
       const socket = io.sockets.sockets.get(player.socketId);
       if (socket) {
         socket.join(roomId);
-        // Update gameState with socketId
+        // Update gameState mit socketId
         rooms[roomId].gameState.players[player.color].socketId = player.socketId;
 
         socket.emit("roomAssigned", {
@@ -300,14 +133,16 @@ io.on("connection", (socket) => {
     const room = rooms[roomId];
     if (!room) {
       socket.emit("invalidMove", { message: "Raum nicht gefunden." });
+      console.log(`Raum ${roomId} nicht gefunden.`);
       return;
     }
 
     const gameState = room.gameState;
-    const updatedState = applyMove(gameState, moveData, roomId, socket.id);
+    const updatedState = applyMove(gameState, moveData, roomId, socket.id, rooms);
 
     if (updatedState.error) {
       socket.emit("invalidMove", { message: updatedState.error });
+      console.log(`Ungültiger Zug von ${socket.id} in Raum ${roomId}: ${updatedState.error}`);
       return;
     }
 
@@ -334,12 +169,15 @@ io.on("connection", (socket) => {
     for (const roomId in rooms) {
       const room = rooms[roomId];
       let playerLeft = false;
+      let leavingColor = null;
+
       // Durchlaufe alle Spieler im SpielState
       for (const color in room.gameState.players) {
         if (room.gameState.players[color].socketId === socket.id) {
           // Entferne den Spieler
           delete room.gameState.players[color];
           playerLeft = true;
+          leavingColor = color;
           io.to(roomId).emit("playerLeft", { socketId: socket.id, color });
           console.log(`Client ${socket.id} hat Raum ${roomId} als ${color} verlassen.`);
           break;
@@ -357,10 +195,11 @@ io.on("connection", (socket) => {
           // Wenn das Spiel vorbei ist, lasse den Raum bestehen oder lösche ihn basierend auf Bedarf
           // Optional: Implementiere weitere Logik hier
         } else {
-          // Optional: Wechsle den aktuellen Spieler, falls der verlassende Spieler der aktuelle war
-          if (room.gameState.currentPlayer === color) {
+          // Wechsle den aktuellen Spieler, falls der verlassende Spieler der aktuelle war
+          if (room.gameState.currentPlayer === leavingColor) {
             switchPlayer(room.gameState, room);
             io.to(roomId).emit("gameStateUpdate", room.gameState);
+            console.log(`Spielerwechsel nach dem Verlassen eines Spielers in Raum ${roomId}.`);
           }
         }
         break; // Annahme: Ein Spieler kann nur in einem Raum sein
@@ -368,89 +207,6 @@ io.on("connection", (socket) => {
     }
   });
 });
-
-function getPlayerColorBySocket(room, socketId) {
-  for (const color in room.gameState.players) {
-    if (room.gameState.players[color].socketId === socketId) {
-      return color;
-    }
-  }
-  return null;
-}
-
-// Ermittelt mögliche Bewegungen basierend auf dem Würfelergebnis
-function getPossibleMoves(room, playerColor, roll) {
-  const player = room.gameState.players[playerColor];
-  const possibleMoves = [];
-
-  player.pieces.forEach((position, index) => {
-    if (position === 0 && roll === 6) {
-      // Kann eine Figur aus der Basis bewegen
-      possibleMoves.push(index);
-    } else if (position > 0 && (position + roll) <= PATHS[playerColor].length) {
-      // Kann eine Figur entlang des Pfades bewegen
-      possibleMoves.push(index);
-    }
-  });
-
-  return possibleMoves;
-}
-
-// Bewegt eine spezifische Figur und handhabt Kollisionen
-function movePiece(room, gameState, playerColor, pieceIndex, roll) {
-  const player = gameState.players[playerColor];
-  let newPosition = player.pieces[pieceIndex] + roll;
-
-  if (player.pieces[pieceIndex] === 0 && roll === 6) {
-    newPosition = 1; // Figur aus der Basis bewegen
-  }
-
-  // Überprüfen, ob die neue Position gültig ist
-  if (newPosition > PATHS[playerColor].length) {
-    return { success: false, message: "Ungültiger Zug: Position außerhalb des Pfades." };
-  }
-
-  // Prüfen auf Kollisionen
-  const targetCoords = PATHS[playerColor][newPosition - 1];
-  for (const color in gameState.players) {
-    if (color !== playerColor) {
-      const opponent = gameState.players[color];
-      opponent.pieces.forEach((opponentPos, idx) => {
-        if (opponentPos > 0 && JSON.stringify(PATHS[color][opponentPos - 1]) === JSON.stringify(targetCoords)) {
-          // Kollision! Gegnerische Figur zurück zur Basis
-          gameState.players[color].pieces[idx] = 0;
-          gameState.message += ` ${playerColor} hat ${color}'s Figur geschlagen!`;
-        }
-      });
-    }
-  }
-
-  // Aktualisiere die Position der eigenen Figur
-  gameState.players[playerColor].pieces[pieceIndex] = newPosition;
-  gameState.message += ` ${playerColor} bewegt Figur ${pieceIndex + 1} auf Position ${newPosition}.`;
-
-  return { success: true };
-}
-
-// Wechselt zum nächsten Spieler
-function switchPlayer(gameState, room) {
-  const playerColors = Object.keys(room.gameState.players).filter(color => room.gameState.players[color].socketId);
-  const currentIndex = playerColors.indexOf(gameState.currentPlayer);
-  const nextIndex = (currentIndex + 1) % playerColors.length;
-  gameState.currentPlayer = playerColors[nextIndex];
-  gameState.message += ` Es ist jetzt ${gameState.currentPlayer}'s Zug.`;
-}
-
-// Überprüft, ob ein Spieler gewonnen hat
-function checkWinner(room, playerColor) {
-  const player = room.gameState.players[playerColor];
-  const playerEndSlots = END_SLOTS[playerColor];
-
-  if (player.pieces.every(pieceIndex => pieceIndex > 0 && playerEndSlots.includes(PATHS[playerColor][pieceIndex - 1]))) {
-    return playerColor;
-  }
-  return null;
-}
 
 // ---------------------------------------
 // Server starten
