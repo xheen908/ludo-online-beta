@@ -2,7 +2,7 @@
 import React from 'react';
 import { IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon } from '@ionic/react';
 import { home, settings } from 'ionicons/icons'; // Icons importieren
-import slotHeavenLogo from '../assets/menschärgeredichnicht.png'; // Importiere das Logo
+import Logo from '../assets/menschärgeredichnicht.png'; // Importiere das Logo
 
 interface HeaderProps {
   title: string;
@@ -17,9 +17,9 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) =
         <IonToolbar color="primary">
           {/* Linker Button */}
           <IonButtons slot="start">
-            <IonButton routerLink="/ludo"> {/* Navigiert zur Startseite */}
-              <IonIcon icon={home} />
-            </IonButton>
+          <IonButton onClick={() => window.location.href = "/ludo"}>
+  <IonIcon icon={home} />
+</IonButton>
             <span style={{ color: 'white', fontSize: '0.9rem', marginLeft: '0.5rem' }}>
             {pageTitle}
           </span>
@@ -27,7 +27,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) =
 
           {/* Logo im Titel */}
           <IonTitle className="header-logo-container" style={{ textAlign: 'center' }}>
-            <img src={slotHeavenLogo} alt="Slot Heaven Logo" style={{ maxHeight: '40px' }} />
+            <img src={Logo} alt="Slot Heaven Logo" style={{ maxHeight: '40px' }} />
           </IonTitle>
 
           {/* Rechter Button */}

@@ -250,10 +250,35 @@ const movePiece = (pieceIndex: number) => {
 
 {view === 'playing' && (
   <div className="playing-screen">
-    <h1>{message}</h1>
-    <h2>Current Player: {currentPlayer}</h2>
-    <h3>Dice Roll: {dice}</h3>
-
+    <p></p>
+    <p></p>
+    <p></p>
+    <p>Player Color: {playerColor}</p>
+{/*     <p>{message}</p>   */}
+    <p>Current Player: {currentPlayer}</p>
+    <p>Dice Roll: {dice}</p>
+    <IonButton 
+      expand="block" 
+      onClick={handleRoll} 
+      disabled={currentPlayer !== playerColor || possibleMoves.length > 0} // Deaktivieren, wenn nicht am Zug oder Bewegungen ausstehen
+      className={currentPlayer === playerColor ? "active-button" : "disabled-button"}
+    >
+      Würfeln
+    </IonButton>
+    {currentPlayer === playerColor && possibleMoves.length > 0 && (
+      <div className="move-pieces">
+        <h3>Wähle eine Figur zum Bewegen:</h3>
+        {possibleMoves.map((pieceIndex) => (
+          <IonButton 
+            key={pieceIndex} 
+            onClick={() => movePiece(pieceIndex)} 
+            color="primary"
+          >
+            Figur {pieceIndex + 1}
+          </IonButton>
+        ))}
+      </div>
+    )}
     <Canvas camera={{ position: [0, 15, 15], fov: 50 }} shadows style={{ width: "100%", height: "500px" }}>
       <ambientLight intensity={0.5} />
       <directionalLight
@@ -282,37 +307,13 @@ const movePiece = (pieceIndex: number) => {
         />
       </Physics>
     </Canvas>
-    <p>Player Color: {playerColor}</p>
-    <p>Current Player: {currentPlayer}</p>
-    <p>roomId: {roomId}</p>
-    <p>user: {user ? user.userId : "null"}</p>
-    <p>Button Disabled: {currentPlayer !== playerColor ? "Ja" : "Nein"}</p>
+    
 
     {/* Button für den Wurf */}
-    <IonButton 
-      expand="block" 
-      onClick={handleRoll} 
-      disabled={currentPlayer !== playerColor || possibleMoves.length > 0} // Deaktivieren, wenn nicht am Zug oder Bewegungen ausstehen
-      className={currentPlayer === playerColor ? "active-button" : "disabled-button"}
-    >
-      Würfeln
-    </IonButton>
 
+    
     {/* Anzeigen der möglichen Züge und ermöglichen, eine Figur zu wählen */}
-    {currentPlayer === playerColor && possibleMoves.length > 0 && (
-      <div className="move-pieces">
-        <h3>Wähle eine Figur zum Bewegen:</h3>
-        {possibleMoves.map((pieceIndex) => (
-          <IonButton 
-            key={pieceIndex} 
-            onClick={() => movePiece(pieceIndex)} 
-            color="primary"
-          >
-            Figur {pieceIndex + 1}
-          </IonButton>
-        ))}
-      </div>
-    )}
+    
   </div>
 )}
         </div>

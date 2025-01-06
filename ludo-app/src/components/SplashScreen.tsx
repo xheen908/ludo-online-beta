@@ -18,7 +18,7 @@ const SplashScreen: React.FC = () => {
   return (
     <div className="splash-screen">
       <img src={slotHeavenLogo} alt="Logo" className="splash-logo"/>
-      <div className="footer-text">© 2024 Slot Heaven</div> {/* Footer text added here */}
+      <div className="footer-text">©Glovelab 2024</div> {/* Footer text added here */}
     </div>
   );
 };

@@ -10,16 +10,16 @@ RUN npm install -g npm@10.8.2
 WORKDIR /app
 
 # Kopiere nur die package.json und package-lock.json
-COPY slot-heaven/package*.json ./
+COPY ludo-app/package*.json ./
 
 # Erzwungene Neuinstallation der Abhängigkeiten
 RUN npm cache clean --force && npm install --omit=dev
 
 # Kopiere den Quellcode
-COPY slot-heaven/ .
+COPY ludo-app/ .
 
 # Exponiere Ports
-EXPOSE 7777
+EXPOSE 8888
 
 
 
