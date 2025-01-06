@@ -1,3 +1,0 @@
-com.x3.dynu.ludobeta.test
-style WhiteBackgroundDialogTheme
-style WhiteBackgroundTheme

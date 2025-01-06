@@ -59,15 +59,15 @@ const Ludo = () => {
   const getCameraPosition = (color: string | null) => {
     switch (color) {
         case 'red':
-            return [0, 30, 15];
+            return [0, 50, 15];
         case 'blue':
-            return [0, 30, -15];
+            return [0, 50, -15];
         case 'yellow':
-            return [15, 30, 0];
+            return [15, 50, 0];
         case 'green':
-            return [-15, 30, 0];
+            return [-15, 50, 0];
         default:
-            return [0, 30, 15]; 
+            return [0, 50, 15]; 
     }
   };
 
@@ -284,7 +284,8 @@ const movePiece = (pieceIndex: number) => {
     >
       Würfeln
     </IonButton>
-    {currentPlayer === playerColor && possibleMoves.length > 0 && (
+        {/* Button für den Wurf */}
+        {currentPlayer === playerColor && possibleMoves.length > 0 && (
       <div className="move-pieces">
         <h3>Wähle eine Figur zum Bewegen:</h3>
         {possibleMoves.map((pieceIndex) => (
@@ -330,9 +331,9 @@ const movePiece = (pieceIndex: number) => {
         />
       </Physics>
     </Canvas>
-    
 
-    {/* Button für den Wurf */}
+
+
 
     
     {/* Anzeigen der möglichen Züge und ermöglichen, eine Figur zu wählen */}

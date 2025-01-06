@@ -1,2 +1,0 @@
-com.x3.dynu.ludobeta.test:style/WhiteBackgroundTheme = 0x7f010001
-com.x3.dynu.ludobeta.test:style/WhiteBackgroundDialogTheme = 0x7f010000
