@@ -22,6 +22,7 @@ interface User {
 
 const Ludo = () => {
   // UI-Zustände
+  const aktuellesJahr = new Date().getFullYear();
   const [view, setView] = useState<'home' | 'selectMode' | 'waiting' | 'playing'>('home');
   const [mode, setMode] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -53,6 +54,22 @@ const Ludo = () => {
 
   // Initialisiere Socket.IO
   const [socket, setSocket] = useState<Socket | null>(null);
+
+  // Camera Start positions by color
+  const getCameraPosition = (color: string | null) => {
+    switch (color) {
+        case 'red':
+            return [0, 30, 15];
+        case 'blue':
+            return [0, 30, -15];
+        case 'yellow':
+            return [15, 30, 0];
+        case 'green':
+            return [-15, 30, 0];
+        default:
+            return [0, 30, 15]; 
+    }
+  };
 
   useEffect(() => {
     const newSocket = io("https://ludogame.x3.dynu.com"); // Stelle sicher, dass die URL korrekt ist
@@ -191,6 +208,8 @@ const movePiece = (pieceIndex: number) => {
 };
 
 
+
+
   return (
     <IonPage>
       <Header pageTitle="Ludo" />
@@ -279,7 +298,11 @@ const movePiece = (pieceIndex: number) => {
         ))}
       </div>
     )}
-    <Canvas camera={{ position: [0, 15, 15], fov: 50 }} shadows style={{ width: "100%", height: "500px" }}>
+      <Canvas 
+        camera={{ position: getCameraPosition(playerColor), fov: 20 }} 
+        shadows 
+        style={{ width: "100%", height: "500px" }}
+      >
       <ambientLight intensity={0.5} />
       <directionalLight
         position={[10, 10, 10]}
@@ -291,7 +314,7 @@ const movePiece = (pieceIndex: number) => {
         shadow-camera-top={15}
         shadow-camera-bottom={-15}
       />
-      <OrbitControls />
+      <OrbitControls enabled={false} />.
       <Physics>
         <LudoBoard
           isAnimating={isAnimating}
@@ -318,7 +341,7 @@ const movePiece = (pieceIndex: number) => {
 )}
         </div>
       </IonContent>
-      <Footer text="© Glovelab 2025" />
+      <Footer text={`© Glovelab 2024-${aktuellesJahr}`} />
     </IonPage>
   );
 };

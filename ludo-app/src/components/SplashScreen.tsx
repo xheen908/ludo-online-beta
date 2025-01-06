@@ -5,6 +5,7 @@ import './SplashScreen.css'; // Optional: eigene CSS für Styling
 import slotHeavenLogo from '../assets/menschärgeredichnicht.png'; // Importiere das Logo
 
 const SplashScreen: React.FC = () => {
+  const currentYear = new Date().getFullYear();
   const history = useHistory();
 
   useEffect(() => {
@@ -18,7 +19,7 @@ const SplashScreen: React.FC = () => {
   return (
     <div className="splash-screen">
       <img src={slotHeavenLogo} alt="Logo" className="splash-logo"/>
-      <div className="footer-text">©Glovelab 2024</div> {/* Footer text added here */}
+      <div className="footer-text">©Glovelab 2024-{currentYear}</div> {/* Footer text added here */}
     </div>
   );
 };
