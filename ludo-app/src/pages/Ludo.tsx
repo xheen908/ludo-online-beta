@@ -1,5 +1,5 @@
 // Ludo.tsx
-import React, { useEffect, useState } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -15,10 +15,14 @@ import LudoLogic from "./Ludo/LudoLogic"; // Importiere die Spiellogik
 import PhysicalDice from "./Ludo/PhysicalDice";
 import LudoBoard from "./Ludo/LudoBoard";
 import logo from "../assets/menschärgeredichnicht.png";
+import { motion } from 'framer-motion';
+import buttonTab from "../assets/sounds/buttonTab.mp3"
 
 interface User {
   userId: string;
 }
+
+
 
 const Ludo = () => {
   // UI-Zustände
@@ -28,6 +32,20 @@ const Ludo = () => {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [playerColor, setPlayerColor] = useState<string | null>(null);
   const [possibleMoves, setPossibleMoves] = useState<number[]>([]);
+  const buttonSoundRef = useRef<HTMLAudioElement | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+
+  useEffect(() => {
+    buttonSoundRef.current = new Audio(buttonTab);
+  }, []);
+
+  const playButtonSound = () => {
+    if (soundEnabled && buttonSoundRef.current) {
+        buttonSoundRef.current.currentTime = 0;
+        buttonSoundRef.current.play().catch(err => console.warn('Sound blockiert:', err));
+    }
+};
 
   // Spiellogik
   const {
@@ -59,17 +77,19 @@ const Ludo = () => {
   const getCameraPosition = (color: string | null) => {
     switch (color) {
         case 'red':
-            return [0, 50, 15];
+            return [0, 33, 33];
         case 'blue':
-            return [0, 50, -15];
+            return [0, 33, -33];
         case 'yellow':
-            return [15, 50, 0];
+            return [33, 33, 0];
         case 'green':
-            return [-15, 50, 0];
+            return [-33, 33, 0];
         default:
-            return [0, 50, 15]; 
+            return [0, 33, 33]; 
     }
   };
+
+  
 
   useEffect(() => {
     const newSocket = io("https://ludogame.x3.dynu.com"); // Stelle sicher, dass die URL korrekt ist
@@ -164,6 +184,7 @@ const Ludo = () => {
 
   // Funktion zum Beitreten der Warteschlange
   const joinQueue = (mode: number) => {
+    playButtonSound();
     console.log("Attempting to join queue...");
     console.log("User:", user);
     console.log("roomId:", roomId);
@@ -184,6 +205,7 @@ const Ludo = () => {
 
 // Funktion zum Handhaben des Würfel-Ergebnisses
 const handleRoll = () => {
+  playButtonSound();
   if (roomId && user && socket) {
     console.log(`User ${user.userId} is attempting to roll the dice in room ${roomId}`);
     socket.emit("playerMove", { 
@@ -198,6 +220,7 @@ const handleRoll = () => {
 
 // Funktion zum Bewegen einer Figur
 const movePiece = (pieceIndex: number) => {
+  playButtonSound();
   if (roomId && user && socket && dice !== null) {
     socket.emit("playerMove", { 
       roomId, 
@@ -212,7 +235,15 @@ const movePiece = (pieceIndex: number) => {
 
   return (
     <IonPage>
-      <Header pageTitle="Ludo" />
+      <Header
+        title="Ludo"
+        pageTitle="Ludo"
+        soundEnabled={soundEnabled}
+        musicEnabled={musicEnabled}
+        setSoundEnabled={setSoundEnabled}
+        setMusicEnabled={setMusicEnabled}
+        playButtonSound={playButtonSound}
+      />
       <IonContent fullscreen>
         <div className="ludo-container">
           {view === 'home' && (
@@ -220,19 +251,30 @@ const movePiece = (pieceIndex: number) => {
               <img src={logo} alt="Ludo Logo" className="logo" width="200px" />
               <IonButton 
                 expand="block" 
-                onClick={() => setView('selectMode')}
+                onClick={() => { playButtonSound(); setView('selectMode') }}
                 disabled={!isConnected} // Button deaktivieren, wenn nicht verbunden
               >
                 Neues Spiel
               </IonButton>
-              <IonButton 
-                expand="block" 
-                onClick={() => setView('selectMode')}
-                disabled={!isConnected} // Button deaktivieren, wenn nicht verbunden
-              >
-                Einstellungen
-              </IonButton>
-              {!isConnected && <p>Verbinde zum Server...</p>}
+
+              {!isConnected && (
+      <>
+        <p>Verbinde zum Server...</p>
+        <motion.div
+          style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
+          animate={{ opacity: [0.2, 1, 0.2] }}
+          transition={{ duration: 1, repeat: Infinity }}
+        >
+          {Array(4)
+            .fill(0)
+            .map((_, index) => (
+              <span key={index} style={{ fontSize: '2rem' }}>
+                .
+              </span>
+            ))}
+        </motion.div>
+      </>
+    )}
             </div>
           )}
 
@@ -254,18 +296,26 @@ const movePiece = (pieceIndex: number) => {
               >
                 4 Spieler
               </IonButton>
-              <IonButton expand="block" color="light" onClick={() => setView('home')}>Zurück</IonButton>
+              <IonButton expand="block" color="light" onClick={() => { playButtonSound(); setView('home') }}>Zurück</IonButton>
             </div>
           )}
 
-          {view === 'waiting' && (
-            <div className="waiting-screen">
-              <img src={logo} alt="Ludo Logo" className="logo" width="200px" />
-              <h2>Warte auf Spieler...</h2>
-              <p>suche...</p>
-              {/* Optional: Spinner oder Animation */}
-            </div>
-          )}
+{view === 'waiting' && (
+    <div className="waiting-screen">
+        <img src={logo} alt="Ludo Logo" className="logo" width="200px" />
+        <h3>Warte auf Spieler</h3>
+        <motion.div
+            style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
+            animate={{ opacity: [0.2, 1, 0.2] }}
+            transition={{ duration: 1, repeat: Infinity }}
+        >
+            <span style={{ fontSize: '2rem' }}>.</span>
+            <span style={{ fontSize: '2rem' }}>.</span>
+            <span style={{ fontSize: '2rem' }}>.</span>
+            <span style={{ fontSize: '2rem' }}>.</span>
+        </motion.div>
+    </div>
+)}
 
 {view === 'playing' && (
   <div className="playing-screen">
@@ -302,7 +352,7 @@ const movePiece = (pieceIndex: number) => {
       <Canvas 
         camera={{ position: getCameraPosition(playerColor), fov: 20 }} 
         shadows 
-        style={{ width: "100%", height: "500px" }}
+        style={{ width: "90%", height: "400px" }}
       >
       <ambientLight intensity={0.5} />
       <directionalLight

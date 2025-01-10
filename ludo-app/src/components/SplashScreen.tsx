@@ -11,7 +11,7 @@ const SplashScreen: React.FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       history.push('/ludo'); // Navigiert zur Hauptseite nach 3 Sekunden
-    }, 3000); // 3000 ms = 3 Sekunden
+    }, 4000); // 3000 ms = 3 Sekunden
 
     return () => clearTimeout(timer); // Cleanup der Komponente
   }, [history]);
