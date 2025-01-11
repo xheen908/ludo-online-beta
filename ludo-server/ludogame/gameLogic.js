@@ -45,34 +45,75 @@ function getPossibleMoves(room, playerColor, roll) {
   const possibleMoves = [];
 
   player.pieces.forEach((position, index) => {
+    // 1) Ermittle theoretische neue Position
+    let newPos;
     if (position === 0 && roll === 6) {
-      // Kann eine Figur aus der Basis bewegen
-      possibleMoves.push(index);
-    } else if (position > 0 && (position + roll) <= PATHS[playerColor].length) {
-      // Kann eine Figur entlang des Pfades bewegen
-      possibleMoves.push(index);
+      newPos = 1;
+    } else if (position > 0 && position + roll <= PATHS[playerColor].length) {
+      newPos = position + roll;
+    } else {
+      // Dieser Stein kann sich nicht bewegen
+      return;
     }
+    
+    // 2) Check: Ist diese neue Position schon von einer eigenen Figur besetzt?
+    // Nur prüfen, wenn newPos > 0 (Figur also auf dem Spielfeld)
+    if (newPos > 0) {
+      const isOccupiedByOwn = player.pieces.some(
+        (pos, idx) => idx !== index && pos === newPos
+      );
+      if (isOccupiedByOwn) {
+        // Dann ist dieser Zug gar nicht möglich
+        return;
+      }
+    }
+
+    // 3) Wenn wir hier sind, ist es tatsächlich ein gültiger Move
+    possibleMoves.push(index);
   });
 
   return possibleMoves;
 }
 
+
+// Bewegt eine spezifische Figur und handhabt Kollisionen
 // Bewegt eine spezifische Figur und handhabt Kollisionen
 function movePiece(room, gameState, playerColor, pieceIndex, roll) {
   const player = gameState.players[playerColor];
   let newPosition = player.pieces[pieceIndex] + roll;
 
+  // Figur aus der Basis bewegen (wenn Position == 0 und Wurf == 6)
   if (player.pieces[pieceIndex] === 0 && roll === 6) {
-    newPosition = 1; // Figur aus der Basis bewegen
+    newPosition = 1;
   }
 
   // Überprüfen, ob die neue Position gültig ist
   if (newPosition > PATHS[playerColor].length) {
-    console.log(`Ungültiger Zug: newPosition (${newPosition}) > PATHS[playerColor].length (${PATHS[playerColor].length})`);
-    return { success: false, message: "Ungültiger Zug: Position außerhalb des Pfades." };
+    console.log(
+      `Ungültiger Zug: newPosition (${newPosition}) > PATHS[playerColor].length (${PATHS[playerColor].length})`
+    );
+    return {
+      success: false,
+      message: "Ungültiger Zug: Position außerhalb des Pfades.",
+    };
   }
 
-  // Überprüfen auf Kollisionen
+  // **NEU**: Überprüfen, ob auf der neuen Position bereits eine eigene Figur steht
+  // (nur relevant, wenn die Figur nicht mehr in der Basis steht, also > 0)
+  if (newPosition > 0) {
+    const positionAlreadyOccupiedByOwn =
+      player.pieces.some((pos, idx) => idx !== pieceIndex && pos === newPosition);
+
+    if (positionAlreadyOccupiedByOwn) {
+      console.log(`Ungültiger Zug: Feld bereits von eigener Figur belegt.`);
+      return {
+        success: false,
+        message: "Ungültiger Zug: Feld bereits von eigener Figur belegt.",
+      };
+    }
+  }
+
+  // Überprüfen auf Kollisionen mit Gegnerfiguren
   const targetCoords = PATHS[playerColor][newPosition - 1];
   for (const color in gameState.players) {
     if (color !== playerColor) {
@@ -85,7 +126,9 @@ function movePiece(room, gameState, playerColor, pieceIndex, roll) {
           // Kollision! Gegnerische Figur zurück zur Basis
           gameState.players[color].pieces[idx] = 0;
           gameState.message += ` ${playerColor} hat ${color}'s Figur geschlagen!`;
-          console.log(`Kollision: ${playerColor} hat ${color}'s Figur ${idx} geschlagen und zurück zur Basis gesetzt.`);
+          console.log(
+            `Kollision: ${playerColor} hat ${color}'s Figur ${idx} geschlagen und zurück zur Basis gesetzt.`
+          );
         }
       });
     }
@@ -98,6 +141,7 @@ function movePiece(room, gameState, playerColor, pieceIndex, roll) {
 
   return { success: true };
 }
+
 
 // Wechselt zum nächsten Spieler
 function switchPlayer(gameState, room) {
@@ -151,36 +195,37 @@ function applyMove(gameState, moveData, roomId, socketId, rooms) {
 
       break;
 
-    case "MOVE_PIECE":
-      if (newState.currentPlayer !== playerColor) {
-        return { ...newState, error: "Es ist nicht dein Zug!" };
-      }
-
-      const { pieceIndex } = moveData;
-      const moveResult = movePiece(room, newState, playerColor, pieceIndex, newState.dice);
-
-      if (!moveResult.success) {
-        return { ...newState, error: moveResult.message };
-      }
-
-      // Überprüfe auf Gewinn
-      const winner = checkWinner(room, playerColor);
-      if (winner) {
-        newState.message = `${winner} hat das Spiel gewonnen!`;
-        newState.gameOver = true;
-        console.log(`${winner} hat das Spiel gewonnen!`);
-      } else {
-        // Wechsle den Spieler basierend auf dem Würfelwurf
-        if (newState.dice !== 6) {
-          switchPlayer(newState, room);
-        } else {
-          newState.message += ` ${newState.currentPlayer} darf erneut würfeln!`;
-          newState.possibleMoves = [];
-          console.log(`${newState.currentPlayer} darf erneut würfeln.`);
+      case "MOVE_PIECE":
+        if (newState.currentPlayer !== playerColor) {
+          return { ...newState, error: "Es ist nicht dein Zug!" };
         }
-      }
-
-      break;
+      
+        const { pieceIndex } = moveData;
+        const moveResult = movePiece(room, newState, playerColor, pieceIndex, newState.dice);
+      
+        if (!moveResult.success) {
+          return { ...newState, error: moveResult.message };
+        }
+      
+        // Sieger-Check
+        const winner = checkWinner(room, playerColor);
+        if (winner) {
+          newState.message = `${winner} hat das Spiel gewonnen!`;
+          newState.gameOver = true;
+        } else {
+          // Spieler wechseln oder nochmal der gleiche bei einer 6
+          if (newState.dice !== 6) {
+            switchPlayer(newState, room);
+          } else {
+            newState.message += ` ${newState.currentPlayer} darf erneut würfeln!`;
+          }
+        }
+      
+        // **Würfel zurücksetzen**, damit der nächste Zug nicht den alten Wert sieht
+        newState.dice = null;
+        newState.possibleMoves = [];
+        break;
+      
 
     default:
       newState.error = "Unbekannter Zugtyp.";

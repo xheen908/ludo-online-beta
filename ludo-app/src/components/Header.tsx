@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+// Header.tsx
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IonHeader,
   IonToolbar,
@@ -20,7 +21,8 @@ import { home, settings, helpCircle, colorPalette, musicalNotes, volumeHigh } fr
 import Logo from '../assets/menschärgeredichnicht.png';
 import backgroundMusic from '../assets/sounds/background.mp3';
 import buttonTab from '../assets/sounds/buttonTab.mp3';
-
+import { AdMob, InterstitialAdEventType, InterstitialAdOptions } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 
 interface HeaderProps {
   title: string;
@@ -33,7 +35,7 @@ interface HeaderProps {
   playButtonSound: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) => {
+const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false, playButtonSound }) => {
   const [showSettingsPopover, setShowSettingsPopover] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<MouseEvent | undefined>();
@@ -55,7 +57,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) =
       audioRef.current.volume = 0.5;
       audioRef.current?.play().catch((err) => {
         console.warn('Autoplay blockiert:', err);
-    });
+      });
     }
 
     if (enabled) {
@@ -72,7 +74,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) =
   };
 
   const handlePlaySound = () => {
-    if (soundEnabled && buttonSoundRef.current) {
+    if (sound && buttonSoundRef.current) {
       buttonSoundRef.current.currentTime = 0;
       buttonSoundRef.current.play().catch(err => console.warn('Autoplay blockiert:', err));
     }
@@ -87,13 +89,62 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, title, collapse = false }) =
     setShowHelpModal(true);
   };
 
+  // AdMob-Integration
+  useEffect(() => {
+    if (Capacitor.isNative) {
+      // Initialisiere AdMob nur auf nativen Plattformen
+      AdMob.initialize({
+        requestTrackingAuthorization: true,
+        testingDevices: [], // Leere Liste für Produktion
+        initializeForTesting: false, // Produktionsmodus
+      });
+
+      // Lade das Interstitial Ad beim Laden der Komponente
+      loadInterstitial();
+    }
+  }, []);
+
+  const loadInterstitial = async () => {
+    try {
+      await AdMob.prepareInterstitial({
+        adId: 'ca-app-pub-5900319578250572/9818967110', // Deine Interstitial Ad Unit ID
+        isTesting: false, // Setze auf false für Produktion
+      });
+      console.log('Interstitial Ad vorbereitet');
+    } catch (error) {
+      console.error('Fehler beim Vorbereiten des Interstitial Ads:', error);
+    }
+  };
+
+  const showInterstitial = async () => {
+    if (Capacitor.isNative) {
+      try {
+        await AdMob.showInterstitial();
+        console.log('Interstitial Ad angezeigt');
+
+        // Nach dem Anzeigen erneut laden
+        loadInterstitial();
+      } catch (error) {
+        console.error('Fehler beim Anzeigen des Interstitial Ads:', error);
+      }
+    } else {
+      console.log('Interstitial Ads funktionieren nur auf nativen Plattformen.');
+    }
+  };
+
   return (
     <>
       <IonHeader>
         <IonToolbar color="primary">
           {/* Linker Button */}
           <IonButtons slot="start">
-            <IonButton onClick={() => (window.location.href = '/ludo')}>
+            <IonButton
+              onClick={async () => {
+                playButtonSound();
+                await showInterstitial(); // Zeige das Interstitial Ad
+                window.location.href = '/ludo'; // Navigiere zur Ludo-Seite
+              }}
+            >
               <IonIcon icon={home} />
             </IonButton>
             <span style={{ color: 'white', fontSize: '0.9rem', marginLeft: '0.5rem' }}>

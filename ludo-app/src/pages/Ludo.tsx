@@ -16,13 +16,13 @@ import PhysicalDice from "./Ludo/PhysicalDice";
 import LudoBoard from "./Ludo/LudoBoard";
 import logo from "../assets/menschärgeredichnicht.png";
 import { motion } from 'framer-motion';
-import buttonTab from "../assets/sounds/buttonTab.mp3"
+import buttonTab from "../assets/sounds/buttonTab.mp3";
+import { AdMob, BannerAdSize, BannerAdPosition } from '@capacitor-community/admob';
+import { Capacitor } from '@capacitor/core';
 
 interface User {
   userId: string;
 }
-
-
 
 const Ludo = () => {
   // UI-Zustände
@@ -45,7 +45,39 @@ const Ludo = () => {
         buttonSoundRef.current.currentTime = 0;
         buttonSoundRef.current.play().catch(err => console.warn('Sound blockiert:', err));
     }
-};
+  };
+
+  const showBanner = async () => {
+    if (Capacitor.isNative) {
+      try {
+        await AdMob.showBanner({
+          adId: 'ca-app-pub-5900319578250572/7004235549', // Deine Produktions-Banner Ad Unit ID
+          adSize: BannerAdSize.BANNER,
+          position: BannerAdPosition.BOTTOM_CENTER,
+          margin: 0,
+          isTesting: false, // Setze auf false für Produktion
+        });
+        console.log('Banner erfolgreich angezeigt');
+      } catch (error) {
+        console.error('Fehler beim Anzeigen des Banners:', error);
+      }
+    } else {
+      console.log('Banner Ads funktionieren nur auf nativen Plattformen.');
+    }
+  };
+
+  const hideBanner = async () => {
+    if (Capacitor.isNative) {
+      try {
+        await AdMob.hideBanner();
+        console.log('Banner erfolgreich versteckt');
+      } catch (error) {
+        console.error('Fehler beim Verstecken des Banners:', error);
+      }
+    } else {
+      console.log('Banner Ads funktionieren nur auf nativen Plattformen.');
+    }
+  };
 
   // Spiellogik
   const {
@@ -88,8 +120,6 @@ const Ludo = () => {
             return [0, 33, 33]; 
     }
   };
-
-  
 
   useEffect(() => {
     const newSocket = io("https://ludogame.x3.dynu.com"); // Stelle sicher, dass die URL korrekt ist
@@ -140,6 +170,9 @@ const Ludo = () => {
       setCurrentPlayer(initialGameState.currentPlayer);
       setDice(initialGameState.dice);
       setMessage(initialGameState.message);
+
+      // Zeigen Sie den Banner an, wenn das Spiel startet
+      showBanner();
     });
 
     // Empfang von Spielstands-Updates
@@ -201,37 +234,52 @@ const Ludo = () => {
   };
 
   // Funktion zum Handhaben des Würfel-Ergebnisses
-// Ludo.tsx (Client-Seite)
+  const handleRoll = () => {
+    playButtonSound();
+    if (roomId && user && socket) {
+      console.log(`User ${user.userId} is attempting to roll the dice in room ${roomId}`);
+      socket.emit("playerMove", { 
+        roomId, 
+        moveData: { type: "ROLL_DICE" }
+      });
+      console.log("Würfeln angefragt");
+    } else {
+      console.log("Roll request failed: roomId oder user ist null");
+    }
+  };
 
-// Funktion zum Handhaben des Würfel-Ergebnisses
-const handleRoll = () => {
-  playButtonSound();
-  if (roomId && user && socket) {
-    console.log(`User ${user.userId} is attempting to roll the dice in room ${roomId}`);
-    socket.emit("playerMove", { 
-      roomId, 
-      moveData: { type: "ROLL_DICE" }
-    });
-    console.log("Würfeln angefragt");
-  } else {
-    console.log("Roll request failed: roomId oder user ist null");
-  }
-};
+  // Funktion zum Bewegen einer Figur
+  const movePiece = (pieceIndex: number) => {
+    playButtonSound();
+    if (roomId && user && socket && dice !== null) {
+      socket.emit("playerMove", { 
+        roomId, 
+        moveData: { type: "MOVE_PIECE", pieceIndex }
+      });
+      console.log(`Bewege Figur ${pieceIndex} in Raum ${roomId}`);
+    }
+  };
 
-// Funktion zum Bewegen einer Figur
-const movePiece = (pieceIndex: number) => {
-  playButtonSound();
-  if (roomId && user && socket && dice !== null) {
-    socket.emit("playerMove", { 
-      roomId, 
-      moveData: { type: "MOVE_PIECE", pieceIndex }
-    });
-    console.log(`Bewege Figur ${pieceIndex} in Raum ${roomId}`);
-  }
-};
+  useEffect(() => {
+    if (Capacitor.isNative) {
+      // Initialisiere AdMob nur auf nativen Plattformen
+      AdMob.initialize({
+        requestTrackingAuthorization: true,
+        testingDevices: [], // Keine Testgeräte-IDs für Produktion
+        initializeForTesting: false, // Produktionsmodus
+      });
 
+      // Entfernen Sie den automatischen Aufruf von showBanner
+      // showBanner();
+    }
+  }, []);
 
-
+  // Optional: Verstecken des Banners, wenn die Ansicht nicht mehr 'playing' ist
+  useEffect(() => {
+    if (view !== 'playing') {
+      hideBanner();
+    }
+  }, [view]);
 
   return (
     <IonPage>
@@ -258,23 +306,23 @@ const movePiece = (pieceIndex: number) => {
               </IonButton>
 
               {!isConnected && (
-      <>
-        <p>Verbinde zum Server...</p>
-        <motion.div
-          style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
-          animate={{ opacity: [0.2, 1, 0.2] }}
-          transition={{ duration: 1, repeat: Infinity }}
-        >
-          {Array(4)
-            .fill(0)
-            .map((_, index) => (
-              <span key={index} style={{ fontSize: '2rem' }}>
-                .
-              </span>
-            ))}
-        </motion.div>
-      </>
-    )}
+                <>
+                  <p>Verbinde zum Server...</p>
+                  <motion.div
+                    style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
+                    animate={{ opacity: [0.2, 1, 0.2] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    {Array(4)
+                      .fill(0)
+                      .map((_, index) => (
+                        <span key={index} style={{ fontSize: '2rem' }}>
+                          .
+                        </span>
+                      ))}
+                  </motion.div>
+                </>
+              )}
             </div>
           )}
 
@@ -300,96 +348,89 @@ const movePiece = (pieceIndex: number) => {
             </div>
           )}
 
-{view === 'waiting' && (
-    <div className="waiting-screen">
-        <img src={logo} alt="Ludo Logo" className="logo" width="200px" />
-        <h3>Warte auf Spieler</h3>
-        <motion.div
-            style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
-            animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 1, repeat: Infinity }}
-        >
-            <span style={{ fontSize: '2rem' }}>.</span>
-            <span style={{ fontSize: '2rem' }}>.</span>
-            <span style={{ fontSize: '2rem' }}>.</span>
-            <span style={{ fontSize: '2rem' }}>.</span>
-        </motion.div>
-    </div>
-)}
+          {view === 'waiting' && (
+            <div className="waiting-screen">
+              <img src={logo} alt="Ludo Logo" className="logo" width="200px" />
+              <h3>Warte auf Spieler</h3>
+              <motion.div
+                style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}
+                animate={{ opacity: [0.2, 1, 0.2] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
+                <span style={{ fontSize: '2rem' }}>.</span>
+                <span style={{ fontSize: '2rem' }}>.</span>
+                <span style={{ fontSize: '2rem' }}>.</span>
+                <span style={{ fontSize: '2rem' }}>.</span>
+              </motion.div>
+            </div>
+          )}
 
-{view === 'playing' && (
-  <div className="playing-screen">
-    <p></p>
-    <p></p>
-    <p></p>
-    <p>Player Color: {playerColor}</p>
-{/*     <p>{message}</p>   */}
-    <p>Current Player: {currentPlayer}</p>
-    <p>Dice Roll: {dice}</p>
-    <IonButton 
-      expand="block" 
-      onClick={handleRoll} 
-      disabled={currentPlayer !== playerColor || possibleMoves.length > 0} // Deaktivieren, wenn nicht am Zug oder Bewegungen ausstehen
-      className={currentPlayer === playerColor ? "active-button" : "disabled-button"}
-    >
-      Würfeln
-    </IonButton>
-        {/* Button für den Wurf */}
-        {currentPlayer === playerColor && possibleMoves.length > 0 && (
-      <div className="move-pieces">
-        <h3>Wähle eine Figur zum Bewegen:</h3>
-        {possibleMoves.map((pieceIndex) => (
-          <IonButton 
-            key={pieceIndex} 
-            onClick={() => movePiece(pieceIndex)} 
-            color="primary"
-          >
-            Figur {pieceIndex + 1}
-          </IonButton>
-        ))}
-      </div>
-    )}
-      <Canvas 
-        camera={{ position: getCameraPosition(playerColor), fov: 20 }} 
-        shadows 
-        style={{ width: "90%", height: "400px" }}
-      >
-      <ambientLight intensity={0.5} />
-      <directionalLight
-        position={[10, 10, 10]}
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-left={-15}
-        shadow-camera-right={15}
-        shadow-camera-top={15}
-        shadow-camera-bottom={-15}
-      />
-      <OrbitControls enabled={false} />.
-      <Physics>
-        <LudoBoard
-          isAnimating={isAnimating}
-          setIsAnimating={setIsAnimating}
-          players={players} // Spieler-Daten aus der Logik
-          Figur={Figur}
-        />
-        <PhysicalDice 
-          position={[0, 3, 0]} 
-          outlayPath={DiceOutlay} 
-          inlayPath={DiceInlay} 
-          onRoll={handleRoll} // Hier wird die Funktion übergeben
-        />
-      </Physics>
-    </Canvas>
-
-
-
-
-    
-    {/* Anzeigen der möglichen Züge und ermöglichen, eine Figur zu wählen */}
-    
-  </div>
-)}
+          {view === 'playing' && (
+            <div className="playing-screen">
+              <p></p>
+              <p></p>
+              <p></p>
+              <p>Player Color: {playerColor}</p>
+              {/* <p>{message}</p> */}
+              <p>Current Player: {currentPlayer}</p>
+              <p>Dice Roll: {dice}</p>
+              <IonButton 
+                expand="block" 
+                onClick={handleRoll} 
+                disabled={currentPlayer !== playerColor || possibleMoves.length > 0} // Deaktivieren, wenn nicht am Zug oder Bewegungen ausstehen
+                className={currentPlayer === playerColor ? "active-button" : "disabled-button"}
+              >
+                Würfeln
+              </IonButton>
+              {/* Button für den Wurf */}
+              {currentPlayer === playerColor && possibleMoves.length > 0 && (
+                <div className="move-pieces">
+                  <h3>Wähle eine Figur zum Bewegen:</h3>
+                  {possibleMoves.map((pieceIndex) => (
+                    <IonButton 
+                      key={pieceIndex} 
+                      onClick={() => movePiece(pieceIndex)} 
+                      color="primary"
+                    >
+                      Figur {pieceIndex + 1}
+                    </IonButton>
+                  ))}
+                </div>
+              )}
+              <Canvas 
+                camera={{ position: getCameraPosition(playerColor), fov: 20 }} 
+                shadows 
+                style={{ width: "90%", height: "400px" }}
+              >
+                <ambientLight intensity={0.5} />
+                <directionalLight
+                  position={[10, 10, 10]}
+                  castShadow
+                  shadow-mapSize-width={2048}
+                  shadow-mapSize-height={2048}
+                  shadow-camera-left={-15}
+                  shadow-camera-right={15}
+                  shadow-camera-top={15}
+                  shadow-camera-bottom={-15}
+                />
+                <OrbitControls enabled={false} />
+                <Physics>
+                  <LudoBoard
+                    isAnimating={isAnimating}
+                    setIsAnimating={setIsAnimating}
+                    players={players} // Spieler-Daten aus der Logik
+                    Figur={Figur}
+                  />
+                  <PhysicalDice 
+                    position={[0, 3, 0]} 
+                    outlayPath={DiceOutlay} 
+                    inlayPath={DiceInlay} 
+                    onRoll={handleRoll} // Hier wird die Funktion übergeben
+                  />
+                </Physics>
+              </Canvas>
+            </div>
+          )}
         </div>
       </IonContent>
       <Footer text={`© Glovelab 2024-${aktuellesJahr}`} />

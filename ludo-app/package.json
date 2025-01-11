@@ -17,6 +17,7 @@
     "electron:dist": "electron-builder"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^6.1.0",
     "@capacitor-community/media": "github:capacitor-community/media",
     "@capacitor/android": "6.2.0",
     "@capacitor/app": "6.0.2",
@@ -42,7 +43,8 @@
     "react-router-dom": "^5.3.4",
     "socket.io-client": "^4.8.1",
     "three": "^0.171.0",
-    "three-stdlib": "^2.35.2"
+    "three-stdlib": "^2.35.2",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
