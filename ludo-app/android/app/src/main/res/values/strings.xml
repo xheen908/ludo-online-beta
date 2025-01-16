@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Ludo-Beta</string>
-    <string name="title_activity_main">Ludo-Beta</string>
-    <string name="package_name">com.x3.dynu.ludobeta</string>
-    <string name="custom_url_scheme">com.x3.dynu.ludobeta</string>
-</resources>
