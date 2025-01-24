@@ -1,4 +1,19 @@
-﻿# Ludo Online (Beta)
+﻿## Table of Contents
+- [Demo](#demo)
+- [Screenshots](#screenshots)
+- [About the Project](#about-the-project)
+  - [Features](#features)
+  - [Technologies](#technologies)
+- [Installation and Setup](#installation-and-setup)
+  - [Requirements](#requirements)
+  - [Local Installation](#local-installation)
+  - [Deployment with Docker](#deployment-with-docker)
+- [Feedback and Contact](#feedback-and-contact)
+- [To-Do](#to-do)
+- [Enjoy testing the beta version!](#enjoy-testing-the-beta-version)
+
+
+# Ludo Online (Beta)
 
 ## Demo
 [**Click here to visit the demo page!**](https://game.ludo.x3.dynu.com/)
