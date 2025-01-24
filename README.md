@@ -92,11 +92,14 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 
 ## Feedback und Kontakt
 
-Hast du Feedback, Vorschläge oder Bugs gefunden? Erstelle ein [Issue](https://github.com/dein-repository/ludo-online/issues) oder kontaktiere mich direkt unter **xheen908@gmail.com*.
+Hast du Feedback, Vorschläge oder Bugs gefunden? Erstelle ein [Issue](https://github.com/xheen908/ludo-online-beta/issues) oder kontaktiere mich direkt unter **xheen908@gmail.com*.
 
 ---
 
 ## To-Do
+- Asymetrische Wüfel Physicalisch Server Seitig + Visual feedback Frontend
+- Animationen
+- mehr Spielsounds ...
 - Verbesserungen am UI/UX
 - Integration eines Rankingsystems
 - Erweiterung der Spielmodi
