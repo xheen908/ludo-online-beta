@@ -90,7 +90,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 
 ## Feedback und Kontakt
 
-Hast du Feedback, Vorschläge oder Bugs gefunden? Erstelle ein [Issue](https://github.com/dein-repository/ludo-online/issues) oder kontaktiere mich direkt unter **deine-email@example.com**.
+Hast du Feedback, Vorschläge oder Bugs gefunden? Erstelle ein [Issue](https://github.com/dein-repository/ludo-online/issues) oder kontaktiere mich direkt unter **xheen908@gmail.com*.
 
 ---
 
