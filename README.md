@@ -52,7 +52,9 @@
 
     ```bash
     git clone https://github.com/xheen908/ludo-online-beta.git
+
     cd ludo-online-beta
+    
     cd ludo-server
     ```
 
@@ -66,6 +68,7 @@
 
     ```bash
     cd ludo-app
+    
     npm install
     ```
 
@@ -73,6 +76,7 @@
 
     ```bash
     cd ..
+    
     node server.js
     ```
 
