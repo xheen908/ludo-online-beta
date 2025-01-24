@@ -56,13 +56,20 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
    cd ludo-server
    ```
 
-2. **Abhängigkeiten installieren:**
+2. **Server Abhängigkeiten installieren:**
    ```bash
+   npm install
+   ```
+
+3. **Web Demo Abhängigkeiten installieren:**
+   ```bash
+   cd ludo-app
    npm install
    ```
 
 3. **Backend + WebDemo starten:**
    ```bash
+    cd ..
     node server.js
    ```
 
