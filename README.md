@@ -104,7 +104,7 @@ Do you have feedback, suggestions, or have found bugs? Create an [Issue](https:/
 ---
 
 ## To-Do
-- Asymmetric dice server-side + visual feedback frontend
+- Asymmetric dice server-side + client side visual feedback
 - Animations
 - More game sounds...
 - Improvements to UI/UX
