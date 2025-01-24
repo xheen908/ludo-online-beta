@@ -35,9 +35,8 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 - **Plattformübergreifend:** Spielbar auf Desktop und mobilen Geräten.
 
 ### Technologien
-- **Frontend:** React, Three.js
-- **Backend:** Node.js, Express, Socket.IO
-- **Deployment:** Docker, dynu.com (Reverse Proxy)
+- **Frontend:** Ionic, React, Three.js, Capacitor
+- **Backend:** Node.js, Express, Socket.IO, Docker
 - **Datenbank:** MySQL (für Spielerstatistiken und Match-Tracking)
 
 ---
