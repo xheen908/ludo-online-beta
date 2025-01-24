@@ -45,7 +45,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 ## Installation und Setup
 
 ### Voraussetzungen
-- Node.js (v14 oder höher)
+- Node.js (v18 oder höher)
 - Docker (falls gewünscht für Deployment)
 
 ### Lokale Installation
