@@ -68,7 +68,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 
 4. **Im Browser öffnen:**
    ```
-   http://localhost:3000
+   http://localhost:8888
    ```
 
 ### Deployment mit Docker
@@ -79,7 +79,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 
 2. **Container starten:**
    ```bash
-   docker run -p 3000:3000 ludo-online
+   docker run -p 8888:8888 ludo-online
    ```
 
 ---
