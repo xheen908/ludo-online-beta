@@ -51,7 +51,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 ### Lokale Installation
 1. **Repository klonen:**
    ```bash
-   git clone https://github.com/dein-repository/ludo-online.git
+   git clone https://github.com/xheen908/ludo-online.git
    cd ludo-online
    ```
 
@@ -62,15 +62,11 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
 
 3. **Backend starten:**
    ```bash
-   npm run start:server
+    cd ludo-server
+    node server.js
    ```
 
-4. **Frontend starten:**
-   ```bash
-   npm start
-   ```
-
-5. **Im Browser öffnen:**
+4. **Im Browser öffnen:**
    ```
    http://localhost:3000
    ```
