@@ -61,7 +61,7 @@ Ludo Online ist ein Echtzeit-Multiplayer-Spiel, das mit moderner Technologie umg
    npm install
    ```
 
-3. **Backend starten:**
+3. **Backend + WebDemo starten:**
    ```bash
     node server.js
    ```
