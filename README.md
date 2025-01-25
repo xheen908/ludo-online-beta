@@ -112,6 +112,7 @@ Do you have feedback, suggestions, or have found bugs? Create an [Issue](https:/
 - Animations
 - More game sounds...
 - Improvements to UI/UX
+- Integration of Friendlist + Chat
 - Integration of a ranking system
 - Expansion of game modes
 
